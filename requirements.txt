@@ -10,3 +10,6 @@
 -r ./requirements/requirements-convert-llama-ggml-to-gguf.txt
 -r ./requirements/requirements-convert-lora-to-ggml.txt
 -r ./requirements/requirements-convert-persimmon-to-gguf.txt
+
+# add pillow for image processing
+pillow

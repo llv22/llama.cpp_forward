@@ -7,6 +7,9 @@ for more information, please go to [Meituan-AutoML/MobileVLM](https://github.com
 The implementation is based on llava, and is compatible with llava and mobileVLM. The usage is basically same as llava.
 
 ## Usage
+
+### 1, Preparation
+
 Build with cmake or run `make llava-cli` to build it.
 
 After building, run: `./llava-cli` to see the usage. For example:
@@ -18,14 +21,37 @@ After building, run: `./llava-cli` to see the usage. For example:
     -p "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER: <image>\nWho is the author of this book? Answer the question using a single word or phrase. ASSISTANT:"
 ```
 
+Get result of evaluation:
+
+```sh
+./build/bin/llava-cli -m models/MobileVLM-1.7B/ggml-model-q4_k.gguf \
+    --mmproj models/MobileVLM-1.7B/mmproj-model-f16.gguf \
+    --image 0.png \
+    -p "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER: <image>\nWho is the author of this book? Answer the question using a single word or phrase. ASSISTANT:"
+```
+
+```sh
+./build/bin/llava-cli -m models/MobileVLM-1.7B/ggml-model-q4_k.gguf \
+    --mmproj models/MobileVLM-1.7B/mmproj-model-f16.gguf \
+    --image /data/orlando/workspace/metaGUI_forward/dataset/train/dialog_0/turn_0/0.png \
+    -p "If I want to open Yelp, how can I click on the screen? please return json format. ASSISTANT:"
+```
+
+### 2. Testing
+
+TODO
+
 ## Model conversion
 
-- Clone `mobileVLM-1.7B` and `clip-vit-large-patch14-336` locally:
+- Go to models folder and clone `mobileVLM-1.7B` and `clip-vit-large-patch14-336` locally:
 
 ```sh
 git clone https://huggingface.co/mtgv/MobileVLM-1.7B
 
 git clone https://huggingface.co/openai/clip-vit-large-patch14-336
+
+ls models/
+# clip-vit-large-patch14-336  ggml-vocab-aquila.gguf  ggml-vocab-baichuan.gguf  ggml-vocab-falcon.gguf  ggml-vocab-gpt2.gguf  ggml-vocab-gpt-neox.gguf  ggml-vocab-llama.gguf  ggml-vocab-mpt.gguf  ggml-vocab-refact.gguf  ggml-vocab-stablelm-3b-4e1t.gguf  ggml-vocab-starcoder.gguf  MobileVLM-1.7B
 ```
 
 2. Use `llava-surgery.py` to split the LLaVA model to LLaMA and multimodel projector constituents:
@@ -34,14 +60,38 @@ git clone https://huggingface.co/openai/clip-vit-large-patch14-336
 python ./examples/llava/llava-surgery.py -m path/to/MobileVLM-1.7B
 ```
 
+The conversion is:
+
+```sh
+python ./examples/llava/llava-surgery.py -m models/MobileVLM-1.7B
+```
+
 3. Use `convert-image-encoder-to-gguf.py` with `--projector-type ldp` to convert the LLaVA image encoder to GGUF:
 
 ```sh
-python ./examples/llava/convert-image-encoder-to-gguf \
+python ./examples/llava/convert-image-encoder-to-gguf.py \
     -m path/to/clip-vit-large-patch14-336 \
     --llava-projector path/to/MobileVLM-1.7B/llava.projector \
     --output-dir path/to/MobileVLM-1.7B \
     --projector-type ldp
+```
+
+The conversion is:
+
+```sh
+python ./examples/llava/convert-image-encoder-to-gguf.py \
+    -m models/clip-vit-large-patch14-336 \
+    --llava-projector models/MobileVLM-1.7B/llava.projector \
+    --output-dir models/MobileVLM-1.7B \
+    --projector-type ldp
+```
+
+The issue now is:
+
+```bash
+ModuleNotFoundError: No module named 'gguf'
+
+# prepare llama.cpp and start to install -r requirements.txt
 ```
 
 4. Use `convert.py` to convert the LLaMA part of LLaVA to GGUF:
@@ -50,9 +100,22 @@ python ./examples/llava/convert-image-encoder-to-gguf \
 python ./convert.py path/to/MobileVLM-1.7B
 ```
 
+start to run
+
+```sh
+python ./convert.py models/MobileVLM-1.7B
+```
+
 5. Use `quantize` to convert LLaMA part's DataType from `fp16` to `q4_k`
+
 ```sh
 ./quantize path/to/MobileVLM-1.7B/ggml-model-f16.gguf path/to/MobileVLM-1.7B/ggml-model-q4_k.gguf q4_k_s
+```
+
+example
+
+```sh
+./quantize models/MobileVLM-1.7B/ggml-model-f16.gguf models/MobileVLM-1.7B/ggml-model-q4_k.gguf q4_k_s
 ```
 
 Now both the LLaMA part and the image encoder is in the `MobileVLM-1.7B` directory.
