@@ -134,3 +134,42 @@ Who is the author of this book?
 Answer the question using a single word or phrase. ASSISTANT:
 /system/bin/sh: /data/local/tmp/llava-cli: not executable: 64-bit ELF file
 ```
+
+4. bridge on [llama-cpp-python](https://github.com/llv22/llama-cpp-python)
+
+```bash
+CMAKE_ARGS="-DLLAMA_BLAS=ON -DLLAMA_BLAS_VENDOR=OpenBLAS" pip install llama-cpp-python
+CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install llama-cpp-python # CUDA
+```
+
+Prepare environments and download weights, according to [guidelines](https://huggingface.co/docs/hub/en/models-downloading)
+
+1. [TheBloke/OpenHermes-2.5-Mistral-7B-GGUF](https://huggingface.co/TheBloke/OpenHermes-2.5-Mistral-7B-GGUF)
+2. [mys/ggml_llava-v1.5-7b](https://huggingface.co/mys/ggml_llava-v1.5-7b)
+3. [TheBloke/Mistral-7B-v0.1-GGUF](https://huggingface.co/TheBloke/Mistral-7B-v0.1-GGUF)
+4. [replit/replit-code-v1_5-3b](https://huggingface.co/replit/replit-code-v1_5-3b)
+
+Reference: [Encountered (N) file(s) that may not have been copied correctly on Windows](https://github.com/git-lfs/git-lfs/issues/4744)
+
+```bash
+git-lfs clone <huggingface.co/model>
+```
+
+5. Hosting servers via llama.cpp
+
+Reference:
+
+* [OpenAI Compatible Web Server](https://llama-cpp-python.readthedocs.io/en/latest/server/#configuration-and-multi-model-support)
+* [Uploading base64 encoded images](https://platform.openai.com/docs/guides/vision)
+* [n_gpu_layers != -1](https://llama-cpp-python.readthedocs.io/en/latest/)
+* [Python Bindings for llama.cpp](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file)
+
+```bash
+# clone into models folder
+# create self_host.conf in models
+cd models
+CMAKE_ARGS="-DLLAMA_CUBLAS=on" FORCE_CMAKE=1 pip install 'llama-cpp-python[server]'
+CMAKE_ARGS="-DLLAMA_CUBLAS=on" FORCE_CMAKE=1 pip install .[server] # build from source /data/orlando/workspace/llama-cpp-python_forward
+# support CUDA to speed up
+CUDA_VISIBLE_DEVICES=0 python3 -m llama_cpp.server --config_file models/self_host_config.json --n_gpu_layers 50
+```
